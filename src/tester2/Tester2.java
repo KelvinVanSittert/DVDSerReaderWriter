@@ -12,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -177,7 +179,9 @@ public class Tester2 {
       //  String identityInsert_Off_stmt="SET IDENTITY_INSERT Customers OFF;SET IDENTITY_INSERT Movies OFF;SET IDENTITY_INSERT Rentals OFF;";
 
           try {
-                String filename = "C:\\Users\\Jarrod\\Documents\\NetBeansProjects\\DVDSerReaderWriter\\src\\Database\\publisher.mdb";
+                Path path = Paths.get("Database/publisher.mdb");
+                Path absolutePath = path.toAbsolutePath();
+                String filename = absolutePath.toString();
                String dbURL = "jdbc:ucanaccess://";//specify the full pathname of the database
                dbURL+= filename.trim() + ";DriverID=22;READONLY=true}"; 
                 String driverName = "net.ucanaccess.jdbc.UcanaccessDriver";
