@@ -6,12 +6,16 @@
 package tester2;
 
 import java.io.BufferedOutputStream;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.sql.*;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -24,175 +28,218 @@ public class Tester2 {
      */
     public static void main(String[] args) {
         
+        ArrayList<DVD> dvds = GetDVDList();
+        ArrayList<Customer> customers = GetCustomers();
+        ArrayList<Rental> rentals = GetRentals();
+        
+        AddToDatabase(dvds,customers,rentals);
+    }
+
+    private static ArrayList<Rental> GetRentals() {
+        ArrayList<Rental> rentalArr = new ArrayList();
+        try {
+            FileInputStream fileIn = new FileInputStream("Renals.ser");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+
+            try{
+                while (in.readObject() != null) {
+                    rentalArr.add((Rental) in.readObject());
+                }
+                //aa = (ArrayList<DVD>) in.readObject();
+
+                in.close();
+            }
+            catch (EOFException exc)
+            {
+                in.close();
+            }
+            catch (IOException ia) {
+                ia.printStackTrace();
+                in.close();
+                return rentalArr;
+            }
+            fileIn.close();
+        }  catch (ClassNotFoundException ca) {
+            System.out.println("Class not found");
+            ca.printStackTrace();
+            return rentalArr;
+        }
+        catch (IOException ia) {
+            ia.printStackTrace();
+            return rentalArr;
+            }
+        
+        //Test to make sure its working
+        //System.out.println(aa.toString());
+        return rentalArr;
+    }
+
+    private static ArrayList<Customer> GetCustomers() {
+        ArrayList<Customer> custArr = new ArrayList();
+        try {
+            FileInputStream fileIn = new FileInputStream("Customers.ser");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+
+            try{
+                while (in.readObject() != null) {
+                    custArr.add((Customer) in.readObject());
+                }
+                //aa = (ArrayList<DVD>) in.readObject();
+
+                in.close();
+            }
+            catch (EOFException exc)
+            {
+                in.close();
+            }
+            catch (IOException ia) {
+                ia.printStackTrace();
+                in.close();
+                return custArr;
+            }
+            fileIn.close();
+        }  catch (ClassNotFoundException ca) {
+            System.out.println("Class not found");
+            ca.printStackTrace();
+            return custArr;
+        }
+        catch (IOException ia) {
+            ia.printStackTrace();
+            return custArr;
+            }
+        
+        //Test to make sure its working
+        //System.out.println(aa.toString());
+        return custArr;
+    }
+
+    private static ArrayList<DVD> GetDVDList() {
         //Creating the array with data to populate the ser file
         
         ArrayList<DVD> dvdArr = new ArrayList();
-        
-        dvdArr.add(new DVD(1001,"The Umpire Strikes Back",2,false,false));
-        dvdArr.add(new DVD(1002,"Balls of Fury",5,true,true));
-        dvdArr.add(new DVD(1003,"Bridget Jones's Diarrhea",4,false,true));
-        dvdArr.add(new DVD(1004,"Dumb and Dumberer",5,true,false));
-        dvdArr.add(new DVD(1005,"Golden I-pod",3,false,true));
-        dvdArr.add(new DVD(1006,"Harry Pothead and the Bong of Fire",6,true,true));
-        dvdArr.add(new DVD(1007,"I See Stupid People",1,false,true));
-        dvdArr.add(new DVD(1008,"Juwanna Mann",3,false,true));
-        dvdArr.add(new DVD(1009,"Parrots of the Coffee-bean",6,true,true));
-        dvdArr.add(new DVD(1010,"Who's your Caddy?",1,false,true));
-        dvdArr.add(new DVD(1011,"You only Burp Thrice",7,false,true));
-        
-        //Populating the ser file with data
-        
-        try
-          {
-            FileOutputStream fileOut = new FileOutputStream("Movies.ser",true);
-            ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(fileOut));
-              for (int i = 0; i < dvdArr.size(); i++) {
-                  out.writeObject(dvdArr.get(i));
-              }
-            
-            out.close();
-            fileOut.close();
-            
-            //System.out.println("Serialized data is saved in Movies.ser");
-            
-          }catch(IOException z)
-          {
-              z.printStackTrace();
-          }
-        
-        //Reading from the ser file
-        DVD aa = new DVD();
-        
         try {
             FileInputStream fileIn = new FileInputStream("Movies.ser");
             ObjectInputStream in = new ObjectInputStream(fileIn);
-            aa = (DVD) in.readObject();
-            
-            in.close();
+
+            try{
+                while (in.readObject() != null) {
+                    dvdArr.add((DVD) in.readObject());
+                }
+                //aa = (ArrayList<DVD>) in.readObject();
+
+                in.close();
+            }
+            catch (EOFException exc)
+            {
+                in.close();
+            }
+            catch (IOException ia) {
+                ia.printStackTrace();
+                in.close();
+                return dvdArr;
+            }
             fileIn.close();
-            
-        } catch (IOException ia) {
-            ia.printStackTrace();
-            return;
-        } catch(ClassNotFoundException ca) {
+        }  catch (ClassNotFoundException ca) {
             System.out.println("Class not found");
             ca.printStackTrace();
-            return;
+            return dvdArr;
         }
+        catch (IOException ia) {
+            ia.printStackTrace();
+            return dvdArr;
+            }
+        
         //Test to make sure its working
-        System.out.println(aa.toString());
+        //System.out.println(aa.toString());
+        return dvdArr;
+    }
+
+    private static void AddToDatabase(ArrayList<DVD> dvds, ArrayList<Customer> customers, ArrayList<Rental> rentals) {
         
-        //Creating the customer array
+        String create_CustomersTable_stmt="create table Customers (custNum INTEGER NOT NULL PRIMARY KEY, firstName VARCHAR(30), surname VARCHAR(30), phoneNum VARCHAR(20), credit DECIMAL(5,2), canRent BOOLEAN)";
+        String create_MoviesTable_stmt="create table Movies (dvdNumber INTEGER NOT NULL PRIMARY KEY, title VARCHAR(50), category VARCHAR(30), price DECIMAL(5,2), newRelease BOOLEAN, availableForRent BOOLEAN)";
+        String create_RentalsTable_stmt="create table Rentals (rentalNumber INTEGER NOT NULL PRIMARY KEY, dateRented VARCHAR(30), dateReturned VARCHAR(30), custNumber INTEGER, dvdNumber INTEGER , totalPenaltyCost DECIMAL(5,2)";
+        //String create_RentalsTable_stmt="create table Rentals (rentalNumber INTEGER NOT NULL PRIMARY KEY, dateRented VARCHAR(30), dateReturned VARCHAR(30), custNumber INTEGER references Customers(custNum), dvdNumber INTEGER references Movies(dvdNumber), totalPenaltyCost DECIMAL(5,2))";
+        create_RentalsTable_stmt += " ,CONSTRAINT fk_Movies" +
+            "    FOREIGN KEY (dvdNumber)" +
+            "    REFERENCES Movies (dvdNumber)" +
+            "    ON DELETE CASCADE";
+        create_RentalsTable_stmt += " ,CONSTRAINT fk_Customers" +
+            "    FOREIGN KEY (custNumber)" +
+            "    REFERENCES Customers (custNum)" +
+            "    ON DELETE CASCADE)";
+
         
-        ArrayList<Customer> custArr = new ArrayList();
-        
-        custArr.add(new Customer(450,"Luke","Atmyass","0834561231",80,true));
-        custArr.add(new Customer(600,"Chris.P","Bacon","0845682315",100.50,false));
-        custArr.add(new Customer(300,"Justin","Case","0847878787",55.50,true));
-        custArr.add(new Customer(550,"Ann","Chovey","08245698723",55,true));
-        custArr.add(new Customer(425,"Hugh","deMann","0762189898",25,true));
-        custArr.add(new Customer(325,"Ben","Dover","0735218968",60,true));
-        custArr.add(new Customer(225,"Brighton","Early","0845623258",30.50,true));
-        custArr.add(new Customer(125,"Hugo","First","0842323232",60,true));
-        custArr.add(new Customer(950,"Dane","Geruss","0745252121",150,true));
-        custArr.add(new Customer(900,"Allie","Grater","0834521874",20.50,true));
-        custArr.add(new Customer(850,"Al","Kaholic","0835218989",75,true));
-        custArr.add(new Customer(800,"Marsha","Mellow","0735468974",90,true));
-        custArr.add(new Customer(750,"Constance","Noring","0745689231",45,true));
-        custArr.add(new Customer(700,"Stu","Padassol","0764512350",20.50,false));
-        custArr.add(new Customer(650,"Sue","Permann","0845689235",55,true));
-        custArr.add(new Customer(400,"Isabelle","Ringing","0825623222",68.50,true));
-        custArr.add(new Customer(500,"Mike","Rohsopht","0741234568",100,true));
-        custArr.add(new Customer(100,"Eileen","Sideways","0845623122",8,true));
-        custArr.add(new Customer(200,"Ima","Stewpidas","0752359852",40,true));
-        custArr.add(new Customer(350,"Ivana.B","Withew","0827878989",90,true));
-        
-        //Populating the Customer ser file with data
-        
-        try
-          {
-            FileOutputStream fileOutCustomer = new FileOutputStream("Customers.ser",true);
-            ObjectOutputStream outCustomer = new ObjectOutputStream(new BufferedOutputStream(fileOutCustomer));
-              for (int i = 0; i < custArr.size(); i++) {
-                  outCustomer.writeObject(custArr.get(i));
-              }
-            
-            outCustomer.close();
-            fileOutCustomer.close();
-            
-            //System.out.println("Serialized data is saved in Customers.ser");
-            
-          }catch(IOException z)
-          {
-              z.printStackTrace();
-          }
-        
-        //Reading from the ser file
-        Customer bb = new Customer();
-        
+        String drop_CustomersTable_stmt="drop table Customers";
+        String drop_MoviesTable_stmt="drop table Movies";
+        String drop_RentalsTable_stmt="drop table Rentals;";
+       // String identityInsert_On_stmt="SET IDENTITY_INSERT Customers ON;SET IDENTITY_INSERT Movies ON;SET IDENTITY_INSERT Rentals ON;";
+      //  String identityInsert_Off_stmt="SET IDENTITY_INSERT Customers OFF;SET IDENTITY_INSERT Movies OFF;SET IDENTITY_INSERT Rentals OFF;";
+
+          try {
+                String filename = "C:\\Users\\Jarrod\\Documents\\NetBeansProjects\\DVDSerReaderWriter\\src\\Database\\publisher.mdb";
+               String dbURL = "jdbc:ucanaccess://";//specify the full pathname of the database
+               dbURL+= filename.trim() + ";DriverID=22;READONLY=true}"; 
+                String driverName = "net.ucanaccess.jdbc.UcanaccessDriver";
+
+                System.out.println("About to Load the JDBC Driver....");
+                Class.forName(driverName);
+                System.out.println("Driver Loaded Successfully....");
+                System.out.println("About to get a connection....");
+                Connection con = DriverManager.getConnection(dbURL); 
+                System.out.println("Connection Established Successfully....");
+               // create a java.sql.Statement so we can run queries
+                System.out.println("Creating statement Object....");
+                Statement s = con.createStatement();
+                
+                System.out.println("Statement object created Successfully....");
+
+                System.out.println("About to execute SQL stmt....");
+                DropTable(s, drop_CustomersTable_stmt);
+                DropTable(s, drop_MoviesTable_stmt);
+                DropTable(s, drop_RentalsTable_stmt);
+
+                s.executeUpdate(create_MoviesTable_stmt);
+                s.executeUpdate(create_CustomersTable_stmt);
+                s.executeUpdate(create_RentalsTable_stmt);
+               // s.executeUpdate(identityInsert_On_stmt); 
+                for(DVD dvd:dvds) { 
+                      String insert_stmt="insert into Movies(dvdNumber, title, category, price, newRelease, availableForRent)";
+                      insert_stmt += "values(" + dvd.getDvdNumber() + ",'" + dvd.getTitle().replace("'", "''") + "','" + dvd.getCategory() + "'," + dvd.getPrice() + "," + dvd.isNewRelease() + "," + dvd.isAvailable() + ");";
+                      s.executeUpdate(insert_stmt); 
+                }
+                
+                for(Customer customer:customers) { 
+                      String insert_stmt="insert into Customers(custNum, firstName, surname, phoneNum, credit,canRent)";
+                      insert_stmt += "values(" + customer.getCustNumber()+ ",'" + customer.getName()+ "','" + customer.getSurname()+ "','" + customer.getPhoneNum()+ "'," + customer.getCredit()+ "," + customer.canRent()+   ");";
+                      s.executeUpdate(insert_stmt); 
+                }
+                
+                for(Rental rental:rentals) { 
+                      String insert_stmt="insert into Movies(rentalNumber, dateRented, dateReturned, custNumber, dvdNumber, totalPenaltyCost)";
+                      insert_stmt += "values(" + rental.getRentalNumber()+ ",'" + rental.getDateRented()+ "','" + rental.getDateReturned()+ "'," + rental.getCustNumber()+ "," + rental.getDvdNumber()+ "," + rental.getTotalPenaltyCost()+   ");";
+                      s.executeUpdate(insert_stmt); 
+                }
+                //s.executeUpdate(identityInsert_Off_stmt); 
+
+                System.out.println("About to close Statement....");
+                s.close(); // close the Statement to let the database know we're done with it
+                con.close(); // close the Connection to let the database know we're done with it
+                System.out.println("Statement closed successfully....");
+            }
+
+
+                catch (Exception err) {
+                System.out.println("ERROR: " + err);
+            }
+    }
+
+    private static void DropTable(Statement s, String dropStatement) {
         try {
-            FileInputStream fileInCustomer = new FileInputStream("Customers.ser");
-            ObjectInputStream inCustomer = new ObjectInputStream(fileInCustomer);
-            bb = (Customer) inCustomer.readObject();
-            bb = (Customer) inCustomer.readObject();
-            
-            inCustomer.close();
-            fileInCustomer.close();
-            
-        } catch (IOException ia) {
-            ia.printStackTrace();
-            return;
-        } catch(ClassNotFoundException ca) {
-            System.out.println("Class not found");
-            ca.printStackTrace();
-            return;
+            s.executeUpdate(dropStatement);
+        } catch (SQLException ex) {
+            Logger.getLogger(Tester2.class.getName()).log(Level.SEVERE, null, ex);
         }
-        //Test to make sure its working
-        System.out.println(bb.toString());
-        
-        //
-        ArrayList<Rental> rentalArr = new ArrayList();
-        
-        try
-          {
-            FileOutputStream fileOutRental = new FileOutputStream("Rentals.ser",true);
-            ObjectOutputStream outRental = new ObjectOutputStream(new BufferedOutputStream(fileOutRental));
-              for (int i = 0; i < rentalArr.size(); i++) {
-                      outRental.writeObject(rentalArr.get(i));
-              }
-            
-            outRental.close();
-            fileOutRental.close();
-            
-            //System.out.println("Serialized data is saved in Rentals.ser");
-            
-          }catch(IOException z)
-          {
-              z.printStackTrace();
-          }
-        
-        //Reading from the ser file
-        
-        try {
-            FileInputStream fileInRental = new FileInputStream("Rentals.ser");
-            ObjectInputStream inRental = new ObjectInputStream(fileInRental);
-            
-            inRental.close();
-            fileInRental.close();
-            
-        } catch (IOException ia) {
-            ia.printStackTrace();
-            return;
-            
-            /*
-            Uncomment when you have an output for the data
-        } catch(ClassNotFoundException ca) {
-            System.out.println("Class not found");
-            ca.printStackTrace();
-            return;
-        */
-        }
- 
     }
     
         
