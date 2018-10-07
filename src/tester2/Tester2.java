@@ -179,7 +179,7 @@ public class Tester2 {
       //  String identityInsert_Off_stmt="SET IDENTITY_INSERT Customers OFF;SET IDENTITY_INSERT Movies OFF;SET IDENTITY_INSERT Rentals OFF;";
 
           try {
-                Path path = Paths.get("Database/publisher.mdb");
+                Path path = Paths.get("src/Database/publisher.mdb");
                 Path absolutePath = path.toAbsolutePath();
                 String filename = absolutePath.toString();
                String dbURL = "jdbc:ucanaccess://";//specify the full pathname of the database
